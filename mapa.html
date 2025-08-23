@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema Integrado de Seguimiento y Administración</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema de seguimiento en tiempo real y administración de usuarios">
+  
+  <!-- Fuentes -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+  <!-- Google Maps JavaScript API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAu1_ei68ehNBkMjAl4jxd82p4UCVnltms&loading=async&callback=inicializarApp" async defer></script>
+
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #3498db;
+      --accent-color: #e74c3c;
+      --background-color: #f8f9fa;
+      --text-dark: #2c3e50;
+      --text-light: #7f8c8d;
+      --border-color: #dee2e6;
+      --success-color: #27ae60;
+      --warning-color: #f39c12;
+      --error-color: #e74c3c;
+      --shadow: 0 2px 10px rgba(0,0,0,0.1);
+      --border-radius: 12px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--background-color);
+      color: var(--text-dark);
+      overflow-x: hidden;
+    }
+
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      z-index: 1000;
+      transition: var(--transition);
+    }
+
+    .sidebar-header {
+      padding: 2rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .sidebar-header i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: var(--accent-color);
+    }
+
+    .sidebar-header h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .sidebar-header p {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    .nav-links {
+      flex: 1;
+      padding: 2rem 0;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 1rem 2rem;
+      color: white;
+      text-decoration: none;
+      transition: var(--transition);
+      position: relative;
+      cursor: pointer;
+    }
+
+    .nav-link:hover {
+      background: rgba(255,255,255,0.1);
+      transform: translateX(5px);
+    }
+
+    .nav-link.active {
+      background: rgba(255,255,255,0.2);
+      border-right: 4px solid var(--accent-color);
+    }
+
+    .nav-link i {
+      width: 20px;
+      margin-right: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .logout-btn {
+      margin: 2rem;
+      padding: 1rem;
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-weight: 500;
+    }
+
+    .logout-btn:hover {
+      background: #c0392b;
+      transform: translateY(-2px);
+    }
+
+    .main-content {
+      margin-left: 280px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .top-bar {
+      background: white;
+      padding: 1.5rem 2rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-avatar {
+      width: 45px;
+      height: 45px;
+      background: var(--secondary-color);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .content-area {
+      padding: 2rem;
+      flex: 1;
+      display: none;
+    }
+
+    .content-area.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Estilos del mapa */
+    .map-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    #map-container {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 200px);
+    }
+
+    .map-header {
+      padding: 1.5rem 2rem;
+      background: var(--primary-color);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .map-header h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.3rem;
+    }
+
+    .btn {
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+    }
+
+    .btn:hover {
+      background: #c0392b;
+      transform: translateY(-2px);
+    }
+
+    #map {
+      flex: 1;
+      min-height: 400px;
+    }
+
+    .map-controls {
+      padding: 1rem 2rem;
+      background: #f8f9fa;
+      display: flex;
+      gap: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .map-type-btn {
+      background: white;
+      color: var(--text-dark);
+      border: 2px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .map-type-btn:hover {
+      border-color: var(--secondary-color);
+      color: var(--secondary-color);
+    }
+
+    .status-bar {
+      padding: 1rem 2rem;
+      background: var(--success-color);
+      color: white;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+    }
+
+    /* Estilos de usuarios */
+    .usuarios-section {
+      gap: 2rem;
+    }
+
+    .usuarios-container {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .usuarios-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .usuario-card {
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .usuario-card:hover {
+      border-color: var(--secondary-color);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .usuario-card p {
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .usuario-card p strong {
+      color: var(--text-dark);
+      font-weight: 600;
+    }
+
+    .usuario-card p span {
+      color: var(--text-light);
+      font-weight: 400;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-light);
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-dark);
+    }
+
+    /* Paginación */
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .pagination {
+      display: flex;
+      list-style: none;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .page-item {
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .page-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem 1rem;
+      color: var(--text-dark);
+      text-decoration: none;
+      background: white;
+      border: 2px solid var(--border-color);
+      transition: var(--transition);
+      min-width: 45px;
+      height: 45px;
+    }
+
+    .page-link:hover:not(.disabled) {
+      background: var(--secondary-color);
+      color: white;
+      border-color: var(--secondary-color);
+    }
+
+    .page-link.active {
+      background: var(--secondary-color);
+      color: white;
+      border-color: var(--secondary-color);
+    }
+
+    .page-link.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Animaciones */
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        position: relative;
+        height: auto;
+      }
+      
+      .main-content {
+        margin-left: 0;
+      }
+      
+      .usuarios-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .top-bar {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+    }
+
+    #error {
+      display: none;
+      color: var(--error-color);
+      background: rgba(231, 76, 60, 0.1);
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      border: 1px solid rgba(231, 76, 60, 0.2);
+      margin-top: 1rem;
+    }
+
+    .info-panel {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .info-panel h3 {
+      color: var(--text-dark);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .location-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .location-info div {
+      padding: 1rem;
+      background: var(--background-color);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .location-info div strong {
+      display: block;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .location-info div span {
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+
+    .debug-info {
+      background: rgba(52, 152, 219, 0.1);
+      border: 1px solid rgba(52, 152, 219, 0.2);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Panel lateral -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div style="font-size: 2.5rem; color: var(--accent-color);">
+          <i class="fas fa-eye-slash"></i>
+        </div>
+        <h1>Sistema No Vidente</h1>
+        <p>Seguimiento y Administración</p>
+      </div>
+      
+      <div class="nav-links">
+        <a href="#" class="nav-link active" data-section="map-section">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>Seguimiento</span>
+        </a>
+        <a href="#" class="nav-link" data-section="usuarios-section">
+          <i class="fas fa-users"></i>
+          <span>Usuarios</span>
+        </a>
+      </div>
+      
+      <button class="logout-btn" id="logoutBtn">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
+    
+    <!-- Contenido principal -->
+    <div class="main-content">
+      <div class="top-bar">
+        <h2 class="section-title">Panel de Seguimiento</h2>
+        <div class="user-info">
+          <div class="user-avatar" id="user-avatar"></div>
+          <div>
+            <div id="user-name"></div>
+            <div id="user-email" style="font-size: 0.8rem; color: var(--text-light);"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Sección de mapa -->
+      <div class="content-area map-section active">
+        <div class="info-panel">
+          <h3><i class="fas fa-info-circle"></i> Información de Usuario No Vidente</h3>
+          <div id="usuario-info">
+            <p>Cargando información del usuario...</p>
+          </div>
+          <div class="location-info" id="location-info" style="display: none;">
+            <div>
+              <strong>Latitud</strong>
+              <span id="current-lat">--</span>
+            </div>
+            <div>
+              <strong>Longitud</strong>
+              <span id="current-lng">--</span>
+            </div>
+            <div>
+              <strong>Última Actualización</strong>
+              <span id="last-update">--</span>
+            </div>
+          </div>
+        </div>
+        <div id="map-container">
+          <div class="map-header">
+            <h2><i class="fas fa-location-dot"></i> Seguimiento en Tiempo Real</h2>
+            <button class="btn" id="center-map">
+              <i class="fas fa-crosshairs"></i> Centrar Mapa
+            </button>
+          </div>
+          
+          <div id="map"></div>
+          
+          <div class="map-controls">
+            <button id="satelliteBtn" class="map-type-btn">
+              <i class="fas fa-satellite"></i> Satélite
+            </button>
+            <button id="mapBtn" class="map-type-btn">
+              <i class="fas fa-map"></i> Mapa
+            </button>
+          </div>
+          
+          <div class="status-bar" id="status">
+            <i class="fas fa-sync-alt fa-spin"></i> Actualizando ubicación...
+          </div>
+        </div>
+      </div>
+      
+      <!-- Sección de usuarios -->
+      <div class="content-area usuarios-section">
+        <h2 class="section-title">Usuarios Registrados</h2>
+        
+        <div class="usuarios-container">
+          <div class="usuarios-grid" id="usuarios-grid">
+            <!-- Los usuarios se cargarán aquí dinámicamente -->
+          </div>
+          
+          <div class="pagination-container">
+            <ul class="pagination" id="pagination">
+              <!-- La paginación se generará dinámicamente -->
+            </ul>
+          </div>
+        </div>
+        
+        <p id="error"></p>
+      </div>
+    </div>
+  </div>
+
+ <script>
+  // Configuración de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDHLdHbKhbvSg-ET9BKgPnKqqX0IagShac",
+  authDomain: "proyectonovidente-d1e58.firebaseapp.com",
+  databaseURL: "https://proyectonovidente-d1e58-default-rtdb.firebaseio.com",
+  projectId: "proyectonovidente-d1e58",
+  storageBucket: "proyectonovidente-d1e58.appspot.com",
+  messagingSenderId: "1089641196998",
+  appId: "1:1089641196998:web:f95785dec09af8136b56c7",
+  measurementId: "G-PVFZ0EL8VQ"
+};
+
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+// Variables globales
+let mapa;
+let marcador;
+let watchId;
+let usuariosCargados = false;
+let todosUsuarios = [];
+let paginaActual = 1;
+let totalPaginas = 1;
+let usuarioNoVidenteUID = null;
+let ubicacionListener = null;
+const usuariosPorPagina = 6;
+
+// Referencias a elementos DOM
+const navLinks = document.querySelectorAll('.nav-link');
+const sections = {
+  'map-section': document.querySelector('.map-section'),
+  'usuarios-section': document.querySelector('.usuarios-section')
+};
+const statusBar = document.getElementById('status');
+
+// Referencias a la base de datos
+const ubicacionesRef = db.ref('ubicacion_novidente');
+const usuariosRef = db.ref('usuarios');
+
+// Función principal de inicialización
+function inicializarApp() {
+  console.log('Inicializando aplicación...');
+  
+  // Verificar autenticación
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      console.log('Usuario autenticado:', user.email);
+      actualizarInfoUsuario();
+      inicializarMapa();
+      configurarEventos();
+      buscarUsuarioNoVidente();
+    } else {
+      console.log('Usuario no autenticado, redirigiendo...');
+      window.location.href = 'index.html';
+    }
+  });
+}
+
+// Función para mostrar información de debug
+function mostrarDebugInfo(mensaje, datos = null) {
+  console.log('DEBUG:', mensaje, datos);
+  const debugDiv = document.getElementById('debug-info');
+  if (debugDiv) {
+    debugDiv.style.display = 'block';
+    debugDiv.innerHTML += `<div><strong>[${new Date().toLocaleTimeString()}]</strong> ${mensaje}</div>`;
+    if (datos) {
+      debugDiv.innerHTML += `<pre>${JSON.stringify(datos, null, 2)}</pre>`;
+    }
+    debugDiv.scrollTop = debugDiv.scrollHeight;
+  }
+}
+
+// Función para cambiar entre secciones
+function changeSection(sectionId) {
+  Object.values(sections).forEach(section => {
+    section.classList.remove('active');
+  });
+  
+  navLinks.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('data-section') === sectionId) {
+      link.classList.add('active');
+    }
+  });
+  
+  if (sections[sectionId]) {
+    sections[sectionId].classList.add('active');
+    document.querySelector('.section-title').textContent = 
+      sectionId === 'map-section' ? 'Panel de Seguimiento' : 'Usuarios Registrados';
+    
+    if (sectionId === 'usuarios-section' && !usuariosCargados) {
+      cargarUsuarios();
+    }
+  }
+}
+
+// Función para obtener iniciales de un nombre
+function obtenerIniciales(nombre) {
+  if (!nombre) return 'U';
+  return nombre.split(' ').map(p => p[0]).join('').toUpperCase().substring(0, 2);
+}
+
+// Función para actualizar la información del usuario en la interfaz
+function actualizarInfoUsuario() {
+  const nombre = sessionStorage.getItem("nombreUsuario") || "Usuario";
+  const email = sessionStorage.getItem("emailUsuario") || (auth.currentUser ? auth.currentUser.email : "");
+  
+  document.getElementById("user-name").textContent = nombre;
+  document.getElementById("user-email").textContent = email;
+  document.getElementById("user-avatar").textContent = obtenerIniciales(nombre);
+}
+
+// Función MEJORADA para buscar el usuario no vidente asociado (SIN VALIDACIÓN DE ACTIVO)
+function buscarUsuarioNoVidente() {
+  const currentUserEmail = auth.currentUser ? auth.currentUser.email : null;
+  
+  mostrarDebugInfo('Iniciando búsqueda de usuario no vidente');
+  mostrarDebugInfo('Email del usuario actual:', currentUserEmail);
+  
+  if (!currentUserEmail) {
+    mostrarDebugInfo('Error: No hay usuario autenticado');
+    mostrarErrorUsuario('No se pudo identificar el usuario actual');
+    return;
+  }
+
+  usuariosRef.once('value')
+    .then((snapshot) => {
+      const data = snapshot.val();
+      mostrarDebugInfo('Datos de usuarios obtenidos:', Object.keys(data || {}));
+      
+      if (data) {
+        let usuarioActual = null;
+        let usuarioNoVidenteEncontrado = null;
+        
+        // Primero encontrar el usuario actual (contacto de emergencia)
+        Object.keys(data).forEach(key => {
+          const usuario = data[key];
+          if (usuario.email === currentUserEmail) {
+            usuarioActual = {
+              uid: key,
+              ...usuario
+            };
+            mostrarDebugInfo('Usuario actual encontrado:', usuarioActual);
+          }
+        });
+
+        if (!usuarioActual) {
+          mostrarDebugInfo('Error: Usuario actual no encontrado en la base de datos');
+          mostrarErrorUsuario('Usuario no encontrado en la base de datos');
+          return;
+        }
+
+        // Buscar usuario no vidente de varias formas (SIN VERIFICAR EL CAMPO ACTIVO)
+        Object.keys(data).forEach(key => {
+          const usuario = data[key];
+          
+          if (usuario.tipo === "No vidente") {
+            mostrarDebugInfo('Revisando usuario no vidente:', {
+              nombre: usuario.nombre,
+              telefono: usuario.telefonoEmergencia,
+              contactoId: usuario.contactoEmergenciaId
+            });
+            
+            // Método 1: Por referencia directa de contacto
+            if (usuario.contactoEmergenciaId === usuarioActual.uid) {
+              usuarioNoVidenteEncontrado = { uid: key, ...usuario };
+              mostrarDebugInfo('Usuario no vidente encontrado por contactoEmergenciaId');
+            }
+            
+            // Método 2: Por teléfono coincidente
+            const telefonoEmergencia = usuario.telefonoEmergencia;
+            if (telefonoEmergencia && (
+              telefonoEmergencia === usuarioActual.cedula ||
+              telefonoEmergencia === usuarioActual.telefono ||
+              telefonoEmergencia === usuarioActual.telefonoEmergencia
+            )) {
+              usuarioNoVidenteEncontrado = { uid: key, ...usuario };
+              mostrarDebugInfo('Usuario no vidente encontrado por teléfono:', telefonoEmergencia);
+            }
+          }
+        });
+
+        if (usuarioNoVidenteEncontrado) {
+          usuarioNoVidenteUID = usuarioNoVidenteEncontrado.uid;
+          sessionStorage.setItem("uidNovidente", usuarioNoVidenteUID);
+          
+          mostrarDebugInfo('Usuario no vidente asignado:', usuarioNoVidenteEncontrado);
+          
+          // Actualizar la información en el panel
+          mostrarInfoUsuario(usuarioNoVidenteEncontrado);
+          
+          // Iniciar seguimiento
+          iniciarSeguimientoUbicacion(usuarioNoVidenteUID);
+          
+        } else {
+          mostrarDebugInfo('No se encontró usuario no vidente asociado');
+          mostrarErrorUsuario('No hay usuario asignado', 
+            'No se encontró ningún usuario no vidente asociado a tu cuenta como contacto de emergencia.');
+        }
+      } else {
+        mostrarDebugInfo('Error: No hay datos en la base de usuarios');
+        mostrarErrorUsuario('Base de datos vacía');
+      }
+    })
+    .catch((error) => {
+      console.error("Error al buscar usuario no vidente:", error);
+      mostrarDebugInfo('Error al buscar usuario:', error.message);
+      mostrarErrorUsuario('Error al cargar información', 'Error al conectar con la base de datos: ' + error.message);
+    });
+}
+
+// Función para mostrar la información del usuario no vidente
+function mostrarInfoUsuario(usuario) {
+  const infoDiv = document.getElementById('usuario-info');
+  infoDiv.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(52, 152, 219, 0.1); border-radius: 8px;">
+      <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--secondary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.5rem;">
+        ${obtenerIniciales(usuario.nombre + ' ' + (usuario.apellido || ''))}
+      </div>
+      <div>
+        <h4 style="margin: 0; color: var(--text-dark); font-size: 1.2rem;">${usuario.nombre} ${usuario.apellido || ''}</h4>
+        <p style="margin: 0.5rem 0 0 0; color: var(--text-light);">Usuario No Vidente</p>
+        <p style="margin: 0.25rem 0 0 0; color: var(--text-light); font-size: 0.9rem;">
+          <i class="fas fa-envelope"></i> ${usuario.email || 'Sin email'}
+        </p>
+        <p style="margin: 0.25rem 0 0 0; color: var(--text-light); font-size: 0.9rem;">
+          <i class="fas fa-phone"></i> Emergencia: ${usuario.telefonoEmergencia || 'Sin teléfono'}
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+// Función para mostrar error de usuario
+function mostrarErrorUsuario(titulo, mensaje = '') {
+  const infoDiv = document.getElementById('usuario-info');
+  infoDiv.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(231, 76, 60, 0.1); border-radius: 8px; border: 1px solid rgba(231, 76, 60, 0.2);">
+      <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--error-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.5rem;">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div>
+        <h4 style="margin: 0; color: var(--error-color); font-size: 1.2rem;">${titulo}</h4>
+        <p style="margin: 0.5rem 0 0 0; color: var(--text-light);">${mensaje}</p>
+      </div>
+    </div>
+  `;
+}
+
+// Función para inicializar el mapa
+function inicializarMapa() {
+  const mapaElemento = document.getElementById('map');
+  if (!mapaElemento) {
+    console.error('Elemento del mapa no encontrado');
+    return;
+  }
+
+  // Configuración inicial del mapa (Quito, Ecuador como centro por defecto)
+  const opcionesMapa = {
+    zoom: 15,
+    center: { lat: -0.2299, lng: -78.5249 },
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    styles: [
+      {
+        featureType: "poi",
+        elementType: "labels",
+        stylers: [{ visibility: "off" }]
+      }
+    ]
+  };
+
+  mapa = new google.maps.Map(mapaElemento, opcionesMapa);
+  
+  console.log('Mapa inicializado correctamente');
+  mostrarDebugInfo('Mapa de Google Maps inicializado');
+}
+
+// Función para iniciar el seguimiento de ubicación
+function iniciarSeguimientoUbicacion(uid) {
+  if (!uid) {
+    mostrarDebugInfo('Error: UID del usuario no vidente no proporcionado');
+    return;
+  }
+
+  mostrarDebugInfo('Iniciando seguimiento para UID:', uid);
+  
+  // Escuchar cambios en la ubicación del usuario no vidente
+  const ubicacionRef = db.ref(`ubicacion_novidente/${uid}`);
+  
+  // Detener listener anterior si existe
+  if (ubicacionListener) {
+    ubicacionListener.off();
+  }
+  
+  ubicacionListener = ubicacionRef.on('value', (snapshot) => {
+    const ubicacion = snapshot.val();
+    mostrarDebugInfo('Ubicación recibida:', ubicacion);
+    
+    if (ubicacion && ubicacion.latitud && ubicacion.longitud) {
+      actualizarMarcadorMapa(ubicacion);
+      actualizarInfoUbicacion(ubicacion);
+      mostrarEstado('Ubicación actualizada correctamente', 'success');
+    } else {
+      mostrarDebugInfo('Ubicación no válida o no disponible');
+      mostrarEstado('Esperando ubicación del usuario...', 'info');
+    }
+  }, (error) => {
+    console.error('Error al escuchar ubicación:', error);
+    mostrarDebugInfo('Error al escuchar ubicación:', error.message);
+    mostrarEstado('Error al obtener ubicación', 'error');
+  });
+}
+
+// Función para actualizar el marcador en el mapa
+function actualizarMarcadorMapa(ubicacion) {
+  if (!mapa) {
+    mostrarDebugInfo('Mapa no inicializado');
+    return;
+  }
+
+  const posicion = {
+    lat: parseFloat(ubicacion.latitud),
+    lng: parseFloat(ubicacion.longitud)
+  };
+
+  // Crear o actualizar marcador
+  if (marcador) {
+    marcador.setPosition(posicion);
+  } else {
+    marcador = new google.maps.Marker({
+      position: posicion,
+      map: mapa,
+      title: 'Ubicación del Usuario No Vidente',
+      icon: {
+        url: 'data:image/svg+xml;base64,' + btoa(`
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+            <circle cx="12" cy="12" r="10" fill="#e74c3c" stroke="#fff" stroke-width="2"/>
+            <circle cx="12" cy="12" r="4" fill="#fff"/>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(32, 32),
+        anchor: new google.maps.Point(16, 16)
+      }
+    });
+
+    // Agregar InfoWindow
+    const infoWindow = new google.maps.InfoWindow({
+      content: `
+        <div style="padding: 10px; font-family: 'Poppins', sans-serif;">
+          <h4 style="margin: 0 0 5px 0; color: #2c3e50;">Usuario No Vidente</h4>
+          <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">Última ubicación conocida</p>
+        </div>
+      `
+    });
+
+    marcador.addListener('click', () => {
+      infoWindow.open(mapa, marcador);
+    });
+  }
+
+  // Centrar mapa en la nueva posición
+  mapa.setCenter(posicion);
+  mostrarDebugInfo('Marcador actualizado en posición:', posicion);
+}
+
+// Función para actualizar la información de ubicación en el panel
+function actualizarInfoUbicacion(ubicacion) {
+  const locationInfo = document.getElementById('location-info');
+  locationInfo.style.display = 'grid';
+  
+  document.getElementById('current-lat').textContent = ubicacion.latitud.toFixed(6);
+  document.getElementById('current-lng').textContent = ubicacion.longitud.toFixed(6);
+  
+  // Formatear timestamp
+  let fechaActualizacion = 'Desconocida';
+  if (ubicacion.timestamp) {
+    const fecha = new Date(ubicacion.timestamp);
+    fechaActualizacion = fecha.toLocaleString('es-ES');
+  }
+  document.getElementById('last-update').textContent = fechaActualizacion;
+}
+
+// Función para mostrar estado en la barra de estado
+function mostrarEstado(mensaje, tipo = 'info') {
+  const statusBar = document.getElementById('status');
+  statusBar.style.display = 'flex';
+  statusBar.innerHTML = `
+    <i class="fas ${tipo === 'success' ? 'fa-check-circle' : tipo === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+    ${mensaje}
+  `;
+  
+  statusBar.style.background = 
+    tipo === 'success' ? 'var(--success-color)' :
+    tipo === 'error' ? 'var(--error-color)' :
+    tipo === 'warning' ? 'var(--warning-color)' :
+    'var(--secondary-color)';
+
+  // Ocultar después de 3 segundos
+  setTimeout(() => {
+    statusBar.style.display = 'none';
+  }, 3000);
+}
+
+// Función para cargar usuarios con paginación (SIN VALIDACIÓN DE ACTIVO)
+function cargarUsuarios() {
+  if (usuariosCargados) return;
+
+  mostrarDebugInfo('Cargando usuarios...');
+  
+  usuariosRef.once('value')
+    .then((snapshot) => {
+      const data = snapshot.val();
+      todosUsuarios = [];
+      
+      if (data) {
+        Object.keys(data).forEach(key => {
+          const usuario = {
+            uid: key,
+            ...data[key]
+          };
+          // REMOVIDO: No validamos el campo activo
+          todosUsuarios.push(usuario);
+        });
+        
+        mostrarDebugInfo(`${todosUsuarios.length} usuarios cargados`);
+        usuariosCargados = true;
+        totalPaginas = Math.ceil(todosUsuarios.length / usuariosPorPagina);
+        mostrarUsuariosPagina(1);
+      } else {
+        mostrarUsuariosVacio();
+      }
+    })
+    .catch((error) => {
+      console.error('Error al cargar usuarios:', error);
+      mostrarError('Error al cargar usuarios: ' + error.message);
+    });
+}
+
+// Función para mostrar usuarios de una página específica
+function mostrarUsuariosPagina(pagina) {
+  paginaActual = pagina;
+  const inicio = (pagina - 1) * usuariosPorPagina;
+  const fin = inicio + usuariosPorPagina;
+  const usuariosPagina = todosUsuarios.slice(inicio, fin);
+  
+  const gridUsuarios = document.getElementById('usuarios-grid');
+  gridUsuarios.innerHTML = '';
+  
+  usuariosPagina.forEach(usuario => {
+    const card = crearCardUsuario(usuario);
+    gridUsuarios.appendChild(card);
+  });
+  
+  generarPaginacion();
+}
+
+// Función para crear una tarjeta de usuario (SIN MOSTRAR ESTADO ACTIVO)
+function crearCardUsuario(usuario) {
+  const card = document.createElement('div');
+  card.className = 'usuario-card fade-in';
+  
+  card.innerHTML = `
+    <p><strong>Nombre:</strong> <span>${usuario.nombre} ${usuario.apellido || ''}</span></p>
+    <p><strong>Email:</strong> <span>${usuario.email || 'Sin email'}</span></p>
+    <p><strong>Cédula:</strong> <span>${usuario.cedula || 'Sin cédula'}</span></p>
+    <p><strong>Tipo:</strong> <span style="color: ${usuario.tipo === 'No vidente' ? 'var(--accent-color)' : 'var(--secondary-color)'}; font-weight: 600;">${usuario.tipo || 'Sin tipo'}</span></p>
+    <p><strong>Teléfono Emergencia:</strong> <span>${usuario.telefonoEmergencia || 'Sin teléfono'}</span></p>
+  `;
+  
+  return card;
+}
+
+// Función para generar la paginación
+function generarPaginacion() {
+  const paginationContainer = document.getElementById('pagination');
+  paginationContainer.innerHTML = '';
+  
+  // Botón anterior
+  const prevItem = document.createElement('li');
+  prevItem.className = 'page-item';
+  prevItem.innerHTML = `
+    <a class="page-link ${paginaActual === 1 ? 'disabled' : ''}" href="#" data-page="${paginaActual - 1}">
+      <i class="fas fa-chevron-left"></i>
+    </a>
+  `;
+  paginationContainer.appendChild(prevItem);
+  
+  // Números de página
+  for (let i = 1; i <= totalPaginas; i++) {
+    const pageItem = document.createElement('li');
+    pageItem.className = 'page-item';
+    pageItem.innerHTML = `
+      <a class="page-link ${i === paginaActual ? 'active' : ''}" href="#" data-page="${i}">
+        ${i}
+      </a>
+    `;
+    paginationContainer.appendChild(pageItem);
+  }
+  
+  // Botón siguiente
+  const nextItem = document.createElement('li');
+  nextItem.className = 'page-item';
+  nextItem.innerHTML = `
+    <a class="page-link ${paginaActual === totalPaginas ? 'disabled' : ''}" href="#" data-page="${paginaActual + 1}">
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  `;
+  paginationContainer.appendChild(nextItem);
+  
+  // Agregar eventos de clic
+  paginationContainer.querySelectorAll('.page-link:not(.disabled)').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const nuevaPagina = parseInt(e.target.closest('.page-link').getAttribute('data-page'));
+      if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
+        mostrarUsuariosPagina(nuevaPagina);
+      }
+    });
+  });
+}
+
+// Función para mostrar estado vacío de usuarios
+function mostrarUsuariosVacio() {
+  const gridUsuarios = document.getElementById('usuarios-grid');
+  gridUsuarios.innerHTML = `
+    <div class="empty-state" style="grid-column: 1 / -1;">
+      <i class="fas fa-users"></i>
+      <h3>No hay usuarios registrados</h3>
+      <p>Aún no se han registrado usuarios en el sistema.</p>
+    </div>
+  `;
+}
+
+// Función para mostrar errores
+function mostrarError(mensaje) {
+  const errorElement = document.getElementById('error');
+  errorElement.textContent = mensaje;
+  errorElement.style.display = 'block';
+  
+  setTimeout(() => {
+    errorElement.style.display = 'none';
+  }, 5000);
+}
+
+// Función para configurar eventos
+function configurarEventos() {
+  // Navegación
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const section = e.target.closest('.nav-link').getAttribute('data-section');
+      changeSection(section);
+    });
+  });
+
+  // Botón de logout
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+      auth.signOut().then(() => {
+        sessionStorage.clear();
+        window.location.href = 'index.html';
+      }).catch((error) => {
+        console.error('Error al cerrar sesión:', error);
+        mostrarError('Error al cerrar sesión');
+      });
+    }
+  });
+
+  // Controles del mapa
+  document.getElementById('center-map').addEventListener('click', () => {
+    if (marcador && mapa) {
+      mapa.setCenter(marcador.getPosition());
+      mapa.setZoom(18);
+      mostrarEstado('Mapa centrado en la ubicación actual', 'success');
+    } else {
+      mostrarEstado('No hay ubicación disponible para centrar', 'warning');
+    }
+  });
+
+  document.getElementById('satelliteBtn').addEventListener('click', () => {
+    if (mapa) {
+      mapa.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+      mostrarEstado('Vista satelital activada', 'info');
+    }
+  });
+
+  document.getElementById('mapBtn').addEventListener('click', () => {
+    if (mapa) {
+      mapa.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+      mostrarEstado('Vista de mapa activada', 'info');
+    }
+  });
+}
+
+// Función principal que se ejecuta cuando Google Maps está listo
+window.inicializarApp = function() {
+  console.log('Callback de Google Maps ejecutado');
+  
+  // Esperar a que Firebase esté listo
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+      console.log('Usuario autenticado, inicializando sistema...');
+      actualizarInfoUsuario();
+      inicializarMapa();
+      configurarEventos();
+      buscarUsuarioNoVidente();
+    } else {
+      console.log('Usuario no autenticado, redirigiendo...');
+      window.location.href = 'index.html';
+    }
+  });
+};
+
+// Función para limpiar recursos al salir
+function limpiarRecursos() {
+  if (ubicacionListener) {
+    ubicacionListener.off();
+    ubicacionListener = null;
+  }
+  
+  if (watchId) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+  }
+}
+
+// Eventos del ciclo de vida de la página
+window.addEventListener('beforeunload', () => {
+  limpiarRecursos();
+});
+
+// Verificar conectividad con Firebase
+function verificarConectividad() {
+  const connectedRef = db.ref('.info/connected');
+  connectedRef.on('value', (snapshot) => {
+    if (snapshot.val() === true) {
+      mostrarDebugInfo('Conectado a Firebase');
+    } else {
+      mostrarDebugInfo('Desconectado de Firebase');
+      mostrarEstado('Problemas de conectividad', 'warning');
+    }
+  });
+}
+
+// Inicializar conectividad
+verificarConectividad();
+ </script>
+</body>
+</html>

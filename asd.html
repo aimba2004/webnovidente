@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema Integrado de Seguimiento y Administración</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema de seguimiento en tiempo real y administración de usuarios">
+  
+  <!-- Fuentes -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #34495e;
+      --accent-color: #3498db;
+      --success-color: #27ae60;
+      --warning-color: #f39c12;
+      --danger-color: #e74c3c;
+      --text-dark: #2c3e50;
+      --text-light: #7f8c8d;
+      --bg-light: #f8f9fa;
+      --white: #ffffff;
+      --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      --border-radius: 8px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: var(--text-dark);
+    }
+
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      z-index: 1000;
+    }
+
+    .sidebar-header {
+      padding: 2rem;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+
+    .sidebar-header h1 {
+      color: var(--primary-color);
+      margin: 1rem 0 0.5rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .sidebar-header p {
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+
+    .nav-links {
+      flex: 1;
+      padding: 1rem 0;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 1rem 2rem;
+      color: var(--text-dark);
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-link:hover {
+      background: var(--bg-light);
+      border-left-color: var(--accent-color);
+    }
+
+    .nav-link.active {
+      background: var(--bg-light);
+      border-left-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    .nav-link i {
+      margin-right: 1rem;
+      font-size: 1.1rem;
+      width: 20px;
+    }
+
+    .logout-btn {
+      margin: 1rem;
+      padding: 1rem;
+      background: var(--danger-color);
+      color: var(--white);
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease;
+    }
+
+    .logout-btn:hover {
+      background: #c0392b;
+    }
+
+    .logout-btn i {
+      margin-right: 0.5rem;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .top-bar {
+      background: var(--white);
+      padding: 1.5rem 2rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-title {
+      color: var(--primary-color);
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-avatar {
+      width: 45px;
+      height: 45px;
+      background: var(--accent-color);
+      color: var(--white);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .content-area {
+      background: var(--white);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 2rem;
+      display: none;
+      flex-direction: column;
+      min-height: calc(100vh - 200px);
+    }
+
+    .content-area.active {
+      display: flex;
+    }
+
+    /* Map Section */
+    .map-section {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #map-container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .map-header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--white);
+    }
+
+    .map-header h2 {
+      color: var(--primary-color);
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .user-tracking-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+
+    .tracking-status {
+      background: var(--success-color);
+      color: var(--white);
+      padding: 0.25rem 0.75rem;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .tracking-status.inactive {
+      background: var(--warning-color);
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      background: var(--accent-color);
+      color: var(--white);
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn:hover {
+      background: #2980b9;
+      transform: translateY(-1px);
+    }
+
+    #map {
+      flex: 1;
+      min-height: 500px;
+      background: #f0f0f0;
+    }
+
+    .map-controls {
+      position: absolute;
+      top: 120px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 1000;
+    }
+
+    .map-type-btn {
+      padding: 0.75rem;
+      background: var(--white);
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+      font-size: 0.85rem;
+    }
+
+    .map-type-btn:hover {
+      background: var(--bg-light);
+      transform: translateY(-1px);
+    }
+
+    .status-bar {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(52, 152, 219, 0.9);
+      color: var(--white);
+      padding: 0.75rem 1rem;
+      border-radius: var(--border-radius);
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+    }
+
+    /* Usuarios Section */
+    .usuarios-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .usuarios-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      flex: 1;
+    }
+
+    .usuario-card {
+      background: var(--white);
+      border: 1px solid #eee;
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    .usuario-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .usuario-card p {
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .usuario-card strong {
+      color: var(--primary-color);
+      min-width: 180px;
+      font-weight: 500;
+    }
+
+    .usuario-card span {
+      color: var(--text-dark);
+      background: var(--bg-light);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-light);
+      grid-column: 1 / -1;
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+      margin-bottom: 0.5rem;
+      color: var(--text-dark);
+    }
+
+    /* Pagination */
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+      margin-top: auto;
+      padding-top: 2rem;
+      border-top: 1px solid #eee;
+    }
+
+    .pagination {
+      list-style: none;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .page-item {
+      border-radius: var(--border-radius);
+      overflow: hidden;
+    }
+
+    .page-link {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: var(--text-dark);
+      text-decoration: none;
+      border: 1px solid #ddd;
+      transition: all 0.3s ease;
+      min-width: 45px;
+      text-align: center;
+    }
+
+    .page-link:hover {
+      background: var(--bg-light);
+      border-color: var(--accent-color);
+    }
+
+    .page-link.active {
+      background: var(--accent-color);
+      color: var(--white);
+      border-color: var(--accent-color);
+    }
+
+    .page-link.disabled {
+      color: var(--text-light);
+      cursor: not-allowed;
+      background: #f8f9fa;
+    }
+
+    .page-link.disabled:hover {
+      background: #f8f9fa;
+      border-color: #ddd;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    #error {
+      display: none;
+      background: #f8d7da;
+      color: #721c24;
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      border: 1px solid #f1b0b7;
+      margin-top: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 1rem;
+      }
+
+      .usuarios-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .top-bar {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+
+      .map-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+
+      .user-tracking-info {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+  </style>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+  <!-- Google Maps JavaScript API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAu1_ei68ehNBkMjAl4jxd82p4UCVnltms" async defer></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Panel lateral -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div style="font-size: 2.5rem; color: var(--accent-color);">
+          <i class="fas fa-eye-slash"></i>
+        </div>
+        <h1>Sistema No Vidente</h1>
+        <p>Seguimiento y Administración</p>
+      </div>
+      
+      <div class="nav-links">
+        <a href="#" class="nav-link active" data-section="map-section">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>Seguimiento</span>
+        </a>
+        <a href="#" class="nav-link" data-section="usuarios-section">
+          <i class="fas fa-users"></i>
+          <span>Usuarios</span>
+        </a>
+      </div>
+      
+      <button class="logout-btn" id="logoutBtn">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
+    
+    <!-- Contenido principal -->
+    <div class="main-content">
+      <div class="top-bar">
+        <h2 class="section-title">Panel de Seguimiento</h2>
+        <div class="user-info">
+          <div class="user-avatar" id="user-avatar"></div>
+          <div>
+            <div id="user-name"></div>
+            <div id="user-email" style="font-size: 0.8rem; color: var(--text-light);"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Sección de mapa -->
+      <div class="content-area map-section">
+        <div id="map-container">
+          <div class="map-header">
+            <div>
+              <h2><i class="fas fa-location-dot"></i> Seguimiento en Tiempo Real</h2>
+              <div class="user-tracking-info">
+                <span>Siguiendo: <strong id="tracked-user-name">-</strong></span>
+                <span class="tracking-status" id="tracking-status">Desconectado</span>
+              </div>
+            </div>
+            <button class="btn" id="center-map">
+              <i class="fas fa-crosshairs"></i> Centrar Mapa
+            </button>
+          </div>
+          
+          <div id="map"></div>
+          
+          <div class="map-controls">
+            <button id="satelliteBtn" class="map-type-btn">
+              <i class="fas fa-satellite"></i> Satélite
+            </button>
+            <button id="mapBtn" class="map-type-btn">
+              <i class="fas fa-map"></i> Mapa
+            </button>
+          </div>
+          
+          <div class="status-bar" id="status">
+            <i class="fas fa-sync-alt fa-spin"></i> Actualizando ubicación...
+          </div>
+        </div>
+      </div>
+      
+      <!-- Sección de usuarios -->
+      <div class="content-area usuarios-section">
+        <h2 class="section-title">Usuarios Registrados</h2>
+        
+        <div class="usuarios-container">
+          <div class="usuarios-grid" id="usuarios-grid">
+            <!-- Los usuarios se cargarán aquí dinámicamente -->
+          </div>
+          
+          <div class="pagination-container">
+            <ul class="pagination" id="pagination">
+              <!-- La paginación se generará dinámicamente -->
+            </ul>
+          </div>
+        </div>
+        
+        <p id="error"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDHLdHbKhbvSg-ET9BKgPnKqqX0IagShac",
+      authDomain: "proyectonovidente-d1e58.firebaseapp.com",
+      databaseURL: "https://proyectonovidente-d1e58-default-rtdb.firebaseio.com",
+      projectId: "proyectonovidente-d1e58",
+      storageBucket: "proyectonovidente-d1e58.appspot.com",
+      messagingSenderId: "1089641196998",
+      appId: "1:1089641196998:web:f95785dec09af8136b56c7",
+      measurementId: "G-PVFZ0EL8VQ"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+    const ubicacionRef = db.ref("ubicacion_novidente");
+    const usuariosRef = db.ref("usuarios");
+
+    // Variables globales
+    let mapa;
+    let marcador;
+    let currentLocation = null;
+    let userUID = null;
+    let trackedUserData = null;
+    let telefonoContacto = null; // Teléfono del usuario a seguir
+    const statusBar = document.getElementById('status');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = {
+      'map-section': document.querySelector('.map-section'),
+      'usuarios-section': document.querySelector('.usuarios-section')
+    };
+    
+    // Variables para paginación
+    let usuariosCargados = false;
+    let usuariosPorPagina = 6;
+    let totalPaginas = 1;
+    let paginaActual = 1;
+    let todosUsuarios = [];
+    
+    // Función para obtener las iniciales del nombre
+    function obtenerIniciales(nombreCompleto) {
+      if (!nombreCompleto) return 'US';
+      
+      const nombres = nombreCompleto.split(' ');
+      let iniciales = '';
+      
+      if (nombres.length > 0) {
+        iniciales += nombres[0].charAt(0).toUpperCase();
+      }
+      
+      if (nombres.length > 1) {
+        iniciales += nombres[1].charAt(0).toUpperCase();
+      }
+      
+      return iniciales || 'US';
+    }
+    
+    // Función para actualizar la información del usuario
+    function actualizarInfoUsuario() {
+      const nombreUsuario = localStorage.getItem("nombreUsuario") || "Usuario";
+      const user = auth.currentUser;
+      
+      document.getElementById('user-name').textContent = nombreUsuario;
+      
+      if (user && user.email) {
+        document.getElementById('user-email').textContent = user.email;
+      } else {
+        document.getElementById('user-email').textContent = "usuario@ejemplo.com";
+      }
+      
+      const iniciales = obtenerIniciales(nombreUsuario);
+      document.getElementById('user-avatar').textContent = iniciales;
+    }
+
+    // Función para buscar usuario por teléfono y verificar que sea "No vidente"
+    async function buscarUsuarioNoVidentePorTelefono(telefono) {
+      try {
+        console.log("🔍 Buscando usuario con teléfono:", telefono);
+        
+        const snapshot = await usuariosRef.once("value");
+        const usuarios = snapshot.val();
+        
+        if (usuarios) {
+          for (const [uid, userData] of Object.entries(usuarios)) {
+            console.log("👤 Verificando usuario:", uid, userData);
+            
+            // Verificar si el teléfono coincide (tanto telefono como telefonoEmergencia)
+            const telefonoCoincide = userData.telefono === telefono || userData.telefonoEmergencia === telefono;
+            
+            // Verificar si es "No vidente" (normalizar la comparación)
+            const esNoVidente = userData.tipo && userData.tipo.toLowerCase().includes("no vidente");
+            
+            console.log("📞 Teléfono coincide:", telefonoCoincide, "- Es no vidente:", esNoVidente);
+            
+            if (telefonoCoincide && esNoVidente) {
+              console.log("✅ Usuario encontrado:", uid, userData);
+              return { uid, ...userData };
+            }
+          }
+        }
+        
+        console.log("❌ No se encontró usuario no vidente con ese teléfono");
+        return null;
+      } catch (error) {
+        console.error("❌ Error al buscar usuario:", error);
+        return null;
+      }
+    }
+
+    // Función para actualizar información de seguimiento en la UI
+    function actualizarInfoSeguimiento(userData, estado = 'conectado') {
+      const trackedUserName = document.getElementById('tracked-user-name');
+      const trackingStatus = document.getElementById('tracking-status');
+      
+      if (userData) {
+        const nombreCompleto = `${userData.nombre || ''} ${userData.apellido || ''}`.trim();
+        trackedUserName.textContent = nombreCompleto || 'Usuario sin nombre';
+        
+        if (estado === 'conectado') {
+          trackingStatus.textContent = 'Conectado';
+          trackingStatus.className = 'tracking-status';
+        } else {
+          trackingStatus.textContent = 'Sin ubicación';
+          trackingStatus.className = 'tracking-status inactive';
+        }
+      } else {
+        trackedUserName.textContent = 'No encontrado';
+        trackingStatus.textContent = 'Usuario no válido';
+        trackingStatus.className = 'tracking-status inactive';
+      }
+    }
+
+    // Función para cambiar de sección
+    function changeSection(sectionId) {
+      Object.values(sections).forEach(section => {
+        section.style.display = 'none';
+      });
+      
+      if (sections[sectionId]) {
+        sections[sectionId].style.display = 'flex';
+        
+        if (sectionId === 'usuarios-section' && !usuariosCargados) {
+          cargarUsuarios();
+        }
+      }
+      
+      const titleElement = document.querySelector('.section-title');
+      if (sectionId === 'map-section') {
+        titleElement.textContent = 'Panel de Seguimiento';
+      } else if (sectionId === 'usuarios-section') {
+        titleElement.textContent = 'Usuarios Registrados';
+      }
+      
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('data-section') === sectionId) {
+          link.classList.add('active');
+        }
+      });
+    }
+
+    // Iniciar mapa
+    async function iniciarMapa() {
+      const ubicacionInicial = { lat: -0.1807, lng: -78.4678 };
+
+      mapa = new google.maps.Map(document.getElementById("map"), {
+        center: ubicacionInicial,
+        zoom: 17,
+        mapTypeId: 'roadmap',
+        styles: [
+          {
+            "featureType": "poi",
+            "stylers": [{ "visibility": "off" }]
+          },
+          {
+            "featureType": "transit",
+            "stylers": [{ "visibility": "off" }]
+          },
+          {
+            "featureType": "road",
+            "elementType": "labels",
+            "stylers": [{ "visibility": "simplified" }]
+          }
+        ],
+        disableDefaultUI: true,
+        zoomControl: true
+      });
+
+      document.getElementById('satelliteBtn').addEventListener('click', () => {
+        mapa.setMapTypeId('hybrid');
+      });
+
+      document.getElementById('mapBtn').addEventListener('click', () => {
+        mapa.setMapTypeId('roadmap');
+      });
+
+      document.getElementById('center-map').addEventListener('click', () => {
+        if (currentLocation) {
+          mapa.panTo(currentLocation);
+          mapa.setZoom(17);
+        }
+      });
+
+      marcador = new google.maps.Marker({
+        position: ubicacionInicial,
+        map: mapa,
+        title: "Ubicación del usuario no vidente",
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: '#EA4335',
+          fillOpacity: 1,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 3,
+          scale: 12
+        },
+        animation: google.maps.Animation.DROP
+      });
+
+      // Obtener el teléfono de contacto del usuario logueado
+      telefonoContacto = localStorage.getItem("telefonoContacto") || localStorage.getItem("telefonoUsuario");
+      
+      console.log("📱 Teléfono de contacto obtenido:", telefonoContacto);
+      
+      if (telefonoContacto) {
+        // Buscar usuario no vidente con ese teléfono
+        trackedUserData = await buscarUsuarioNoVidentePorTelefono(telefonoContacto);
+        
+        if (trackedUserData) {
+          console.log("✅ Usuario no vidente encontrado:", trackedUserData);
+          userUID = trackedUserData.uid;
+          
+          // Actualizar información de seguimiento
+          actualizarInfoSeguimiento(trackedUserData, 'desconectado');
+          
+          // Escuchar cambios en la ubicación específica del usuario no vidente
+          const ubicacionUsuarioRef = ubicacionRef.child(userUID);
+          
+          ubicacionUsuarioRef.on("value", (snapshot) => {
+            const datos = snapshot.val();
+            
+            if (!datos || !datos.latitud || !datos.longitud) {
+              console.log("📍 No hay datos de ubicación para este usuario");
+              actualizarInfoSeguimiento(trackedUserData, 'desconectado');
+              
+              statusBar.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Sin ubicación disponible';
+              statusBar.style.background = 'rgba(243, 156, 18, 0.9)';
+              statusBar.style.display = 'flex';
+              
+              setTimeout(() => {
+                statusBar.style.display = 'none';
+              }, 3000);
+              return;
+            }
+
+            currentLocation = {
+              lat: datos.latitud,
+              lng: datos.longitud
+            };
+
+            // Actualizar estado de seguimiento
+            actualizarInfoSeguimiento(trackedUserData, 'conectado');
+
+            // Mostrar mensaje de actualización
+            statusBar.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Ubicación actualizada';
+            statusBar.style.background = 'rgba(39, 174, 96, 0.9)';
+            statusBar.style.display = 'flex';
+            
+            setTimeout(() => {
+              statusBar.style.display = 'none';
+            }, 2000);
+
+            // Actualizar mapa
+            marcador.setPosition(currentLocation);
+            mapa.panTo(currentLocation);
+            
+            // Animación del marcador
+            marcador.setAnimation(google.maps.Animation.BOUNCE);
+            setTimeout(() => {
+              marcador.setAnimation(null);
+            }, 1500);
+            
+            // Actualizar título del marcador
+            const nombreCompleto = `${trackedUserData.nombre || ''} ${trackedUserData.apellido || ''}`.trim();
+            marcador.setTitle(`Ubicación de ${nombreCompleto || 'Usuario no vidente'}`);
+            
+            console.log("📍 Ubicación actualizada:", currentLocation, "Timestamp:", datos.timestamp);
+          });
+          
+          // Escuchar errores de conexión
+          ubicacionUsuarioRef.on("error", (error) => {
+            console.error("❌ Error al escuchar ubicación:", error);
+            statusBar.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error de conexión';
+            statusBar.style.background = 'rgba(231, 76, 60, 0.9)';
+            statusBar.style.display = 'flex';
+            actualizarInfoSeguimiento(trackedUserData, 'desconectado');
+          });
+          
+        } else {
+          console.error("❌ No se encontró usuario no vidente con el teléfono:", telefonoContacto);
+          actualizarInfoSeguimiento(null);
+          
+          statusBar.innerHTML = '<i class="fas fa-user-slash"></i> Usuario no encontrado o no es no vidente';
+          statusBar.style.display = 'flex';
+          statusBar.style.background = 'rgba(231, 76, 60, 0.9)';
+          
+          setTimeout(() => {
+            statusBar.style.display = 'none';
+          }, 5000);
+        }
+      } else {
+        console.error("❌ No se encontró teléfono de contacto");
+        actualizarInfoSeguimiento(null);
+        
+        statusBar.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Información de contacto incompleta';
+        statusBar.style.display = 'flex';
+        statusBar.style.background = 'rgba(231, 76, 60, 0.9)';
+        
+        setTimeout(() => {
+          statusBar.style.display = 'none';
+        }, 5000);
+      }
+    }
+
+    // Cargar usuarios con paginación
+    function cargarUsuarios() {
+      usuariosRef.once("value")
+        .then(snapshot => {
+          const usuarios = snapshot.val();
+          const contenedor = document.getElementById("usuarios-grid");
+          contenedor.innerHTML = "";
+
+          if (!usuarios) {
+            contenedor.innerHTML = `
+              <div class="empty-state">
+                <i class="fas fa-user-slash"></i>
+                <h3>No hay usuarios registrados</h3>
+                <p>Actualmente no hay usuarios en la base de datos.</p>
+              </div>
+            `;
+            return;
+          }
+
+          todosUsuarios = Object.entries(usuarios).map(([uid, datos]) => ({ uid, ...datos }));
+          totalPaginas = Math.ceil(todosUsuarios.length / usuariosPorPagina);
+          crearPaginacion();
+          mostrarPagina(1);
+          usuariosCargados = true;
+        })
+        .catch(error => {
+          const errorElement = document.getElementById("error");
+          errorElement.textContent = "Error al obtener usuarios: " + error.message;
+          errorElement.style.display = "block";
+        });
+    }
+
+    // Crear tarjeta de usuario
+    function crearTarjetaUsuario(usuario) {
+      const card = document.createElement("div");
+      card.className = "usuario-card fade-in";
+
+      // Destacar si es el usuario que se está siguiendo
+      const esSeguido = usuario.uid === userUID;
+      if (esSeguido) {
+        card.style.border = "2px solid var(--success-color)";
+        card.style.background = "linear-gradient(135deg, #f8f9fa 0%, #e8f5e8 100%)";
+      }
+
+      card.innerHTML = `
+        ${esSeguido ? '<div style="background: var(--success-color); color: white; padding: 0.5rem; margin: -1.5rem -1.5rem 1rem; border-radius: var(--border-radius) var(--border-radius) 0 0; font-size: 0.8rem; font-weight: 600; text-align: center;"><i class="fas fa-location-dot"></i> USUARIO SEGUIDO</div>' : ''}
+        <p><strong>Nombre:</strong> <span>${usuario.nombre || "No especificado"}</span></p>
+        <p><strong>Apellido:</strong> <span>${usuario.apellido || "No especificado"}</span></p>
+        <p><strong>Cédula:</strong> <span>${usuario.cedula || "No especificada"}</span></p>
+        <p><strong>Dirección:</strong> <span>${usuario.direccion || "No especificada"}</span></p>
+        <p><strong>Teléfono:</strong> <span>${usuario.telefono || "No especificado"}</span></p>
+        <p><strong>Teléfono Emergencia:</strong> <span>${usuario.telefonoEmergencia || "No especificado"}</span></p>
+        <p><strong>Tipo:</strong> <span style="background: ${usuario.tipo && usuario.tipo.toLowerCase().includes('no vidente') ? 'var(--success-color)' : 'var(--bg-light)'}; color: ${usuario.tipo && usuario.tipo.toLowerCase().includes('no vidente') ? 'white' : 'var(--text-dark)'};">${usuario.tipo || "No especificado"}</span></p>
+      `;
+
+      return card;
+    }
+
+    // Crear paginación
+    function crearPaginacion() {
+      const paginacion = document.getElementById("pagination");
+      paginacion.innerHTML = "";
+      
+      const prevBtn = document.createElement("li");
+      prevBtn.className = "page-item";
+      prevBtn.innerHTML = `
+        <a class="page-link ${paginaActual === 1 ? 'disabled' : ''}" href="#" aria-label="Anterior">
+          <i class="fas fa-chevron-left"></i>
+        </a>
+      `;
+      prevBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (paginaActual > 1) {
+          mostrarPagina(paginaActual - 1);
+        }
+      });
+      paginacion.appendChild(prevBtn);
+      
+      const maxBotones = 5;
+      let inicio = Math.max(1, paginaActual - Math.floor(maxBotones / 2));
+      let fin = Math.min(totalPaginas, inicio + maxBotones - 1);
+      
+      if (fin - inicio + 1 < maxBotones) {
+        inicio = Math.max(1, fin - maxBotones + 1);
+      }
+      
+      if (inicio > 1) {
+        const firstBtn = document.createElement("li");
+        firstBtn.className = "page-item";
+        firstBtn.innerHTML = `
+          <a class="page-link ${1 === paginaActual ? 'active' : ''}" href="#">1</a>
+        `;
+        firstBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          mostrarPagina(1);
+        });
+        paginacion.appendChild(firstBtn);
+        
+        if (inicio > 2) {
+          const dots = document.createElement("li");
+          dots.className = "page-item disabled";
+          dots.innerHTML = '<span class="page-link">...</span>';
+          paginacion.appendChild(dots);
+        }
+      }
+      
+      for (let i = inicio; i <= fin; i++) {
+        const pageBtn = document.createElement("li");
+        pageBtn.className = "page-item";
+        pageBtn.innerHTML = `
+          <a class="page-link ${i === paginaActual ? 'active' : ''}" href="#">${i}</a>
+        `;
+        pageBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          mostrarPagina(i);
+        });
+        paginacion.appendChild(pageBtn);
+      }
+      
+      if (fin < totalPaginas) {
+        if (fin < totalPaginas - 1) {
+          const dots = document.createElement("li");
+          dots.className = "page-item disabled";
+          dots.innerHTML = '<span class="page-link">...</span>';
+          paginacion.appendChild(dots);
+        }
+        
+        const lastBtn = document.createElement("li");
+        lastBtn.className = "page-item";
+        lastBtn.innerHTML = `
+          <a class="page-link ${totalPaginas === paginaActual ? 'active' : ''}" href="#">${totalPaginas}</a>
+        `;
+        lastBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          mostrarPagina(totalPaginas);
+        });
+        paginacion.appendChild(lastBtn);
+      }
+      
+      const nextBtn = document.createElement("li");
+      nextBtn.className = "page-item";
+      nextBtn.innerHTML = `
+        <a class="page-link ${paginaActual === totalPaginas ? 'disabled' : ''}" href="#" aria-label="Siguiente">
+          <i class="fas fa-chevron-right"></i>
+        </a>
+      `;
+      nextBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (paginaActual < totalPaginas) {
+          mostrarPagina(paginaActual + 1);
+        }
+      });
+      paginacion.appendChild(nextBtn);
+    }
+
+    // Mostrar página específica
+    function mostrarPagina(numeroPagina) {
+      paginaActual = numeroPagina;
+      
+      const inicio = (numeroPagina - 1) * usuariosPorPagina;
+      const fin = inicio + usuariosPorPagina;
+      const usuariosPagina = todosUsuarios.slice(inicio, fin);
+      
+      const contenedor = document.getElementById("usuarios-grid");
+      contenedor.innerHTML = "";
+      
+      usuariosPagina.forEach(usuario => {
+        const card = crearTarjetaUsuario(usuario);
+        contenedor.appendChild(card);
+      });
+      
+      crearPaginacion();
+    }
+
+    // Función para cerrar sesión
+    function cerrarSesion() {
+      // Limpiar datos de localStorage
+      localStorage.removeItem("nombreUsuario");
+      localStorage.removeItem("telefonoUsuario");
+      localStorage.removeItem("telefonoContacto");
+      
+      // Desconectar listeners de Firebase
+      if (userUID) {
+        const ubicacionUsuarioRef = ubicacionRef.child(userUID);
+        ubicacionUsuarioRef.off();
+      }
+      
+      // Redirigir al login
+      window.location.href = "index.html";
+    }
+
+    // Event listeners para navegación
+    navLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const sectionId = link.getAttribute('data-section');
+        if (sectionId) {
+          changeSection(sectionId);
+        }
+      });
+    });
+
+    // Event listener para cerrar sesión
+    document.getElementById('logoutBtn').addEventListener('click', cerrarSesion);
+
+    // Función de prueba para simular diferentes números de teléfono
+    function simularTelefonoContacto() {
+      // Para pruebas, puedes cambiar este número
+      const telefonoPrueba = "0992600415"; // Este número debería coincidir con el usuario en la base de datos
+      localStorage.setItem("telefonoContacto", telefonoPrueba);
+      console.log("📱 Teléfono de prueba configurado:", telefonoPrueba);
+    }
+
+    // Inicializar la aplicación
+    window.addEventListener('load', () => {
+      console.log("🚀 Inicializando aplicación...");
+      
+      // Para pruebas: descomentar la siguiente línea para simular un teléfono específico
+      // simularTelefonoContacto();
+      
+      actualizarInfoUsuario();
+      changeSection('map-section');
+      
+      if (typeof google !== 'undefined') {
+        iniciarMapa();
+      } else {
+        console.log("⏳ Esperando carga de Google Maps...");
+        setTimeout(iniciarMapa, 500);
+      }
+    });
+
+    // Función para debugging - mostrar información en consola
+    function mostrarInfoDebug() {
+      console.log("📊 Información de Debug:");
+      console.log("- Teléfono de contacto:", telefonoContacto);
+      console.log("- Usuario seguido UID:", userUID);
+      console.log("- Datos del usuario seguido:", trackedUserData);
+      console.log("- Ubicación actual:", currentLocation);
+    }
+
+    // Exponer función de debug globalmente para uso en consola
+    window.debug = mostrarInfoDebug;
+    
+    // Mostrar información inicial
+    console.log("📱 Sistema de Seguimiento Iniciado");
+    console.log("ℹ️ Para debug, escribir 'debug()' en la consola");
+  </script>
+</body>
+</html>
